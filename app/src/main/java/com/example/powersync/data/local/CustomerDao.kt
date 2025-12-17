@@ -1,0 +1,30 @@
+package com.example.powersync.data.local
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Created by H.Mousavioun on 12/2/2025
+ */
+@Dao
+interface CustomerDao {
+    @Query("SELECT * FROM customers ORDER BY id DESC")
+    fun getCustomers(): Flow<List<CustomerEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCustomer(customer: CustomerEntity)
+
+    @Update
+    suspend fun updateCustomer(customer: CustomerEntity)
+
+    @Delete
+    suspend fun deleteCustomer(customer: CustomerEntity)
+
+    @Query("DELETE FROM customers")
+    suspend fun deleteAll()
+}
