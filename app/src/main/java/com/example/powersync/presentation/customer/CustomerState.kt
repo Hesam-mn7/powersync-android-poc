@@ -11,5 +11,8 @@ data class CustomerState(
     val customers: List<Customer> = emptyList(),
     val error: String? = null,
     val nameInput: String = "",
-    val descriptionInput: String = ""
-)
+    val descriptionInput: String = "",
+    val editingId: String? = null
+) {
+    val isEditing: Boolean get() = editingId != null
+}

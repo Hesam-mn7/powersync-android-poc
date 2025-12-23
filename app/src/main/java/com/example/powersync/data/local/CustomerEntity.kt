@@ -1,5 +1,6 @@
 package com.example.powersync.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,6 +11,7 @@ import androidx.room.PrimaryKey
 data class CustomerEntity(
     @PrimaryKey
     val id: String,
-    val customerName: String,
+    @ColumnInfo(name = "customername")
+    val customername: String,
     val description: String
 )

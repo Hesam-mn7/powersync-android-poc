@@ -7,23 +7,26 @@ import com.powersync.db.schema.PendingStatement
 import com.powersync.db.schema.PendingStatementParameter
 
 /**
- * Created by H.Mousavioun on 12/16/2025
+ * PowerSync schema for Room integration
+ * NO RawTable on Android
  */
-@ExperimentalPowerSyncAPI
+@OptIn(ExperimentalPowerSyncAPI::class)
 val powerSyncSchema = Schema(
-    RawTable(
-        name = "customers",
-        put = PendingStatement(
-            "INSERT OR REPLACE INTO customers (id, customerName, description) VALUES (?, ?, ?)",
-            listOf(
-                PendingStatementParameter.Id,
-                PendingStatementParameter.Column("customerName"),
-                PendingStatementParameter.Column("description"),
+    listOf(
+        RawTable(
+            name = "customers",
+            put = PendingStatement(
+                "INSERT OR REPLACE INTO customers (id, customername, description) VALUES (?, ?, ?)",
+                listOf(
+                    PendingStatementParameter.Id,
+                    PendingStatementParameter.Column("customername"),
+                    PendingStatementParameter.Column("description"),
+                )
+            ),
+            delete = PendingStatement(
+                "DELETE FROM customers WHERE id = ?",
+                listOf(PendingStatementParameter.Id)
             )
-        ),
-        delete = PendingStatement(
-            "DELETE FROM customers WHERE id = ?",
-            listOf(PendingStatementParameter.Id)
         )
     )
 )

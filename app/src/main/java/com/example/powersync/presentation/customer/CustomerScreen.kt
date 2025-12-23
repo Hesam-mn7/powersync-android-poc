@@ -28,9 +28,7 @@ fun CustomerScreen(
             TopAppBar(
                 title = { Text("Customers (PowerSync)") },
                 actions = {
-                    TextButton(onClick = {
-                        viewModel.sendIntent(CustomerIntent.DeleteAll)
-                    }) {
+                    TextButton(onClick = { viewModel.sendIntent(CustomerIntent.DeleteAll) }) {
                         Text("Delete All")
                     }
                 }
@@ -43,7 +41,6 @@ fun CustomerScreen(
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-            // Inputs
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = state.nameInput,
@@ -62,17 +59,30 @@ fun CustomerScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = { viewModel.submitNewCustomer() },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Add Customer")
+                Button(
+                    onClick = { viewModel.submit() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(if (state.isEditing) "Update Customer" else "Add Customer")
+                }
+
+                if (state.isEditing) {
+                    OutlinedButton(
+                        onClick = { viewModel.sendIntent(CustomerIntent.CancelEdit) }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { viewModel.generateFakeCustomers(10000) },
+                onClick = { viewModel.generateFakeCustomers(1000) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Generate 1000 Customers (Performance Test)")
@@ -80,24 +90,19 @@ fun CustomerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (state.isLoading) {
-                CircularProgressIndicator()
-            }
+            if (state.isLoading) CircularProgressIndicator()
 
             state.error?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error
-                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = it, color = MaterialTheme.colorScheme.error)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             CustomerList(
                 customers = state.customers,
-                onDelete = { id ->
-                    viewModel.sendIntent(CustomerIntent.DeleteCustomer(id))
-                }
+                onEdit = { id -> viewModel.sendIntent(CustomerIntent.StartEdit(id)) },
+                onDelete = { id -> viewModel.sendIntent(CustomerIntent.DeleteCustomer(id)) }
             )
         }
     }
@@ -106,17 +111,16 @@ fun CustomerScreen(
 @Composable
 private fun CustomerList(
     customers: List<Customer>,
+    onEdit: (String) -> Unit,
     onDelete: (String) -> Unit
 ) {
     LazyColumn {
-        items(customers) { customer ->
+        items(customers, key = { it.id }) { customer ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
-                    .clickable {
-                        // اینجا می‌تونی بعداً برای Edit دیالوگ باز کنی
-                    }
+                    .clickable { onEdit(customer.id) }
             ) {
                 Row(
                     modifier = Modifier
@@ -124,10 +128,16 @@ private fun CustomerList(
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column {
-                        Text(text = customer.customerName, style = MaterialTheme.typography.titleMedium)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = customer.customername,
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = customer.description, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = customer.description,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                     TextButton(onClick = { onDelete(customer.id) }) {
                         Text("Delete")

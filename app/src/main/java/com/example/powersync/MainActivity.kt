@@ -8,23 +8,19 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.powersync.data.local.AppDatabase
 import com.example.powersync.data.repository.CustomerRepositoryImpl
-import com.example.powersync.data.sync.PowerSyncClientHolder
 import com.example.powersync.presentation.customer.CustomerScreen
 import com.example.powersync.presentation.customer.CustomerViewModel
 import com.example.powersync.ui.theme.MVIRoomTheme
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val db = AppDatabase.getInstance(applicationContext)
-        PowerSyncClientHolder.init(applicationContext, db)
         val repo = CustomerRepositoryImpl(db.customerDao())
 
         setContent {
             MVIRoomTheme {
-
                 val vm: CustomerViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         @Suppress("UNCHECKED_CAST")
@@ -33,7 +29,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
-
                 CustomerScreen(viewModel = vm)
             }
         }

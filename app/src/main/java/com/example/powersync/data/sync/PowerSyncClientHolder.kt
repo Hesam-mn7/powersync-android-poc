@@ -34,17 +34,82 @@ object PowerSyncClientHolder {
             pool = pool,
             scope = scope,
             schema = powerSyncSchema,
-            identifier = "app_db", // بهتره همون نام DB باشه
+            identifier = "app_db",
             logger = psLogger
         )
     }
+
+    @OptIn(ExperimentalPowerSyncAPI::class)
+    suspend fun installCrudTriggers() {
+        psdb.writeTransaction { tx ->
+            tx.execute(
+                """
+            CREATE TRIGGER IF NOT EXISTS customers_insert
+            AFTER INSERT ON customers
+            FOR EACH ROW
+            BEGIN
+              INSERT INTO powersync_crud (op, id, type, data)
+              VALUES (
+                'PUT',
+                NEW.id,
+                'customers',
+                json_object(
+                  'id', NEW.id,
+                  'customername', NEW.customername,
+                  'description', NEW.description
+                )
+              );
+            END;
+            """.trimIndent()
+            )
+
+            tx.execute(
+                """
+            CREATE TRIGGER IF NOT EXISTS customers_update
+            AFTER UPDATE ON customers
+            FOR EACH ROW
+            BEGIN
+              SELECT CASE
+                WHEN (OLD.id != NEW.id)
+                THEN RAISE (FAIL, 'Cannot update id')
+              END;
+
+              INSERT INTO powersync_crud (op, id, type, data)
+              VALUES (
+                'PATCH',
+                NEW.id,
+                'customers',
+                json_object(
+                  'id', NEW.id,
+                  'customername', NEW.customername,
+                  'description', NEW.description
+                )
+              );
+            END;
+            """.trimIndent()
+            )
+
+            tx.execute(
+                """
+            CREATE TRIGGER IF NOT EXISTS customers_delete
+            AFTER DELETE ON customers
+            FOR EACH ROW
+            BEGIN
+              INSERT INTO powersync_crud (op, id, type)
+              VALUES ('DELETE', OLD.id, 'customers');
+            END;
+            """.trimIndent()
+            )
+        }
+    }
+
 
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun connect(connector: PowerSyncBackendConnector) {
         psdb.connect(
             connector,
             options = SyncOptions(
-                newClientImplementation = true // ✅ RawTable requirement
+                newClientImplementation = true
             )
         )
     }

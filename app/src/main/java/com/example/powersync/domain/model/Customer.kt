@@ -5,6 +5,6 @@ package com.example.powersync.domain.model
  */
 data class Customer(
     val id: String = "",
-    val customerName: String,
+    val customername: String,
     val description: String
 )

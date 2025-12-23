@@ -43,8 +43,13 @@ class CustomerRepositoryImpl(
 
     // Mapping helpers
     private fun CustomerEntity.toDomain(): Customer =
-        Customer(id = id, customerName = customerName, description = description)
+        Customer(id = id, customername = customername, description = description)
 
     private fun Customer.toEntity(): CustomerEntity =
-        CustomerEntity(id = id, customerName = customerName, description = description)
+        CustomerEntity(
+            id = id,
+            customername = customername,
+            description = description
+        )
+
 }

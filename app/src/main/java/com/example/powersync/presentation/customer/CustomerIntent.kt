@@ -17,9 +17,10 @@ sealed class CustomerIntent {
         val description: String
     ) : CustomerIntent()
 
-    data class DeleteCustomer(
-        val id: String
-    ) : CustomerIntent()
+    data class DeleteCustomer(val id: String) : CustomerIntent()
 
     object DeleteAll : CustomerIntent()
+
+    data class StartEdit(val customerId: String) : CustomerIntent()
+    object CancelEdit : CustomerIntent()
 }
