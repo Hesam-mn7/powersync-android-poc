@@ -42,9 +42,15 @@ object PowerSyncClientHolder {
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun installCrudTriggers() {
         psdb.writeTransaction { tx ->
+
+            tx.execute("DROP TRIGGER IF EXISTS customers_insert;")
+            tx.execute("DROP TRIGGER IF EXISTS customers_update;")
+            tx.execute("DROP TRIGGER IF EXISTS customers_delete;")
+
+            // INSERT => PUT
             tx.execute(
                 """
-            CREATE TRIGGER IF NOT EXISTS customers_insert
+            CREATE TRIGGER customers_insert
             AFTER INSERT ON customers
             FOR EACH ROW
             BEGIN
@@ -63,9 +69,10 @@ object PowerSyncClientHolder {
             """.trimIndent()
             )
 
+            // UPDATE => PATCH
             tx.execute(
                 """
-            CREATE TRIGGER IF NOT EXISTS customers_update
+            CREATE TRIGGER customers_update
             AFTER UPDATE ON customers
             FOR EACH ROW
             BEGIN
@@ -89,9 +96,10 @@ object PowerSyncClientHolder {
             """.trimIndent()
             )
 
+            // DELETE => DELETE
             tx.execute(
                 """
-            CREATE TRIGGER IF NOT EXISTS customers_delete
+            CREATE TRIGGER customers_delete
             AFTER DELETE ON customers
             FOR EACH ROW
             BEGIN
