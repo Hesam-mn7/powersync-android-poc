@@ -156,15 +156,14 @@ class CustomerViewModel(
 
     fun generateFakeCustomers(count: Int = 1000) {
         viewModelScope.launch {
-            repeat(count) {
-                repository.addCustomer(
-                    Customer(
-                        id = UUID.randomUUID().toString(),
-                        customername = "Customer $it",
-                        description = "Description $it"
-                    )
+            val list = (0 until count).map {
+                Customer(
+                    id = UUID.randomUUID().toString(),
+                    customername = "Customer $it",
+                    description = "Description $it"
                 )
             }
+            repository.addCustomers(list)
         }
     }
 }

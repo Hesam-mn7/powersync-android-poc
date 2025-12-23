@@ -1,5 +1,6 @@
 package com.example.powersync.domain.repository
 
+import com.example.powersync.data.sync.SyncTransferDebouncer
 import com.example.powersync.domain.model.Customer
 import kotlinx.coroutines.flow.Flow
 
@@ -12,4 +13,5 @@ interface CustomerRepository {
     suspend fun updateCustomer(customer: Customer)
     suspend fun deleteCustomer(customer: Customer)
     suspend fun deleteAll()
+    suspend fun addCustomers(list: List<Customer>)
 }

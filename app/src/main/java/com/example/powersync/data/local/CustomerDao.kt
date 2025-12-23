@@ -31,4 +31,11 @@ interface CustomerDao {
 
     @Query("DELETE FROM customers")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM customers WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<String>): List<CustomerEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCustomers(items: List<CustomerEntity>)
+
 }

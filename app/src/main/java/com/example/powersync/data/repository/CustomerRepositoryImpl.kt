@@ -3,6 +3,7 @@ package com.example.powersync.data.repository
 import com.example.powersync.data.local.CustomerDao
 import com.example.powersync.data.local.CustomerEntity
 import com.example.powersync.data.sync.PowerSyncClientHolder
+import com.example.powersync.data.sync.SyncTransferDebouncer
 import com.example.powersync.domain.model.Customer
 import com.example.powersync.domain.repository.CustomerRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,22 +24,27 @@ class CustomerRepositoryImpl(
 
     override suspend fun addCustomer(customer: Customer) {
         dao.insertCustomer(customer.toEntity())
-        PowerSyncClientHolder.pool.transferPendingRoomUpdatesToPowerSync()
+        SyncTransferDebouncer.requestTransfer()
     }
 
     override suspend fun updateCustomer(customer: Customer) {
         dao.updateCustomer(customer.toEntity())
-        PowerSyncClientHolder.pool.transferPendingRoomUpdatesToPowerSync()
+        SyncTransferDebouncer.requestTransfer()
     }
 
     override suspend fun deleteCustomer(customer: Customer) {
         dao.deleteCustomer(customer.toEntity())
-        PowerSyncClientHolder.pool.transferPendingRoomUpdatesToPowerSync()
+        SyncTransferDebouncer.requestTransfer()
     }
 
     override suspend fun deleteAll() {
         dao.deleteAll()
-        PowerSyncClientHolder.pool.transferPendingRoomUpdatesToPowerSync()
+        SyncTransferDebouncer.requestTransfer()
+    }
+
+    override suspend fun addCustomers(customers: List<Customer>) {
+        dao.insertCustomers(customers.map { it.toEntity() })
+        SyncTransferDebouncer.flushNow()
     }
 
     // Mapping helpers

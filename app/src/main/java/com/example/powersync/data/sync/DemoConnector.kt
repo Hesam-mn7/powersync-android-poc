@@ -42,44 +42,52 @@ class DemoConnector(
     }
 
     override suspend fun uploadData(database: PowerSyncDatabase) {
-        Log.e("PSYNC", "uploadData() CALLED")
-
         val tx = database.getNextCrudTransaction() ?: return
 
         val crudArray = JSONArray()
 
+        // 1) ids that need data
+        val needData = tx.crud
+            .filter { it.op.name != "DELETE" }
+            .map { it.id }
+
+        val rowsById = customerDao.getByIds(needData)
+            .associateBy { it.id }
+
+        // 2) build payload
         for (e in tx.crud) {
-            val op = e.op.name   // PUT / PATCH / DELETE
+            val op = e.op.name
             val id = e.id
 
             val obj = JSONObject()
-            obj.put("op", op)
-            obj.put("type", "customers")   // ثابت
+            obj.put("type", "customers")
             obj.put("id", id)
 
-            // ✅ دیتا رو خودمون از Room می‌خونیم
-            if (op != "DELETE") {
-                val row = customerDao.getById(id)
-                if (row != null) {
-                    obj.put(
-                        "data",
-                        JSONObject()
-                            .put("id", row.id)
-                            .put("customername", row.customername)
-                            .put("description", row.description)
-                    )
-                } else {
-                    // اگر رکورد نبود، بیخیال این op می‌شیم
-                    Log.e("PSYNC", "uploadData: row not found in local DB for id=$id (op=$op)")
-                    continue
-                }
+            if (op == "DELETE") {
+                obj.put("op", "DELETE")
+                crudArray.put(obj)
+                continue
             }
 
+            val row = rowsById[id]
+            if (row == null) {
+                obj.put("op", "DELETE")
+                crudArray.put(obj)
+                continue
+            }
+
+            obj.put("op", op) // PUT or PATCH
+            obj.put(
+                "data",
+                JSONObject()
+                    .put("id", row.id)
+                    .put("customername", row.customername)
+                    .put("description", row.description)
+            )
             crudArray.put(obj)
         }
 
         val payload = JSONObject().put("crud", crudArray)
-        Log.e("PSYNC", "UPLOAD PAYLOAD = ${payload.toString().take(1500)}")
 
         val conn = (URL("$backendBase/api/upload").openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
@@ -95,10 +103,8 @@ class DemoConnector(
         val resp = (if (code in 200..299) conn.inputStream else conn.errorStream)
             ?.bufferedReader()?.readText()
 
-        Log.e("PSYNC", "upload response code=$code body=$resp")
-
         if (code in 200..299) {
-            tx.complete(null) // ✅ خیلی مهم
+            tx.complete(null)
         } else {
             throw IllegalStateException("Upload failed: HTTP $code body=$resp")
         }
