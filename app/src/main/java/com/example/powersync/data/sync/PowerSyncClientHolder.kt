@@ -3,6 +3,7 @@ package com.example.powersync.data.sync
 import android.content.Context
 import co.touchlab.kermit.Logger
 import com.example.powersync.data.local.AppDatabase
+import com.example.powersync.data.sync.spec.CustomersSpec
 import com.powersync.ExperimentalPowerSyncAPI
 import com.powersync.PowerSyncDatabase
 import com.powersync.connectors.PowerSyncBackendConnector
@@ -41,6 +42,9 @@ object PowerSyncClientHolder {
 
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun installCrudTriggers() {
+        val spec = CustomersSpec
+        val jsonNew = spec.triggerJsonObject("NEW.")
+
         psdb.writeTransaction { tx ->
 
             tx.execute("DROP TRIGGER IF EXISTS customers_insert;")
@@ -50,69 +54,58 @@ object PowerSyncClientHolder {
             // INSERT => PUT
             tx.execute(
                 """
-            CREATE TRIGGER customers_insert
-            AFTER INSERT ON customers
-            FOR EACH ROW
-            BEGIN
-              INSERT INTO powersync_crud (op, id, type, data)
-              VALUES (
-                'PUT',
-                NEW.id,
-                'customers',
-                json_object(
-                  'id', NEW.id,
-                  'customername', NEW.customername,
-                  'description', NEW.description,
-                  'customerCode', NEW.customerCode
-                )
-              );
-            END;
-            """.trimIndent()
+                CREATE TRIGGER customers_insert
+                AFTER INSERT ON customers
+                FOR EACH ROW
+                BEGIN
+                  INSERT INTO powersync_crud (op, id, type, data)
+                  VALUES (
+                    'PUT',
+                    NEW.${spec.idColumn},
+                    '${spec.type}',
+                    $jsonNew
+                  );
+                END;
+                """.trimIndent()
             )
 
             // UPDATE => PATCH
             tx.execute(
                 """
-            CREATE TRIGGER customers_update
-            AFTER UPDATE ON customers
-            FOR EACH ROW
-            BEGIN
-              SELECT CASE
-                WHEN (OLD.id != NEW.id)
-                THEN RAISE (FAIL, 'Cannot update id')
-              END;
+                CREATE TRIGGER customers_update
+                AFTER UPDATE ON customers
+                FOR EACH ROW
+                BEGIN
+                  SELECT CASE
+                    WHEN (OLD.${spec.idColumn} != NEW.${spec.idColumn})
+                    THEN RAISE (FAIL, 'Cannot update id')
+                  END;
 
-              INSERT INTO powersync_crud (op, id, type, data)
-              VALUES (
-                'PATCH',
-                NEW.id,
-                'customers',
-                json_object(
-                  'id', NEW.id,
-                  'customername', NEW.customername,
-                  'description', NEW.description,
-                  'customerCode', NEW.customerCode
-                )
-              );
-            END;
-            """.trimIndent()
+                  INSERT INTO powersync_crud (op, id, type, data)
+                  VALUES (
+                    'PATCH',
+                    NEW.${spec.idColumn},
+                    '${spec.type}',
+                    $jsonNew
+                  );
+                END;
+                """.trimIndent()
             )
 
             // DELETE => DELETE
             tx.execute(
                 """
-            CREATE TRIGGER customers_delete
-            AFTER DELETE ON customers
-            FOR EACH ROW
-            BEGIN
-              INSERT INTO powersync_crud (op, id, type)
-              VALUES ('DELETE', OLD.id, 'customers');
-            END;
-            """.trimIndent()
+                CREATE TRIGGER customers_delete
+                AFTER DELETE ON customers
+                FOR EACH ROW
+                BEGIN
+                  INSERT INTO powersync_crud (op, id, type)
+                  VALUES ('DELETE', OLD.${spec.idColumn}, '${spec.type}');
+                END;
+                """.trimIndent()
             )
         }
     }
-
 
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun connect(connector: PowerSyncBackendConnector) {

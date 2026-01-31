@@ -30,10 +30,7 @@ class App : Application() {
             val hostIp = "192.168.1.35" //API
             Log.e("PSYNC", "Connecting to PowerSync host=$hostIp")
             PowerSyncClientHolder.connect(
-                DemoConnector(
-                    hostIp = hostIp,
-                    customerDao = roomDb.customerDao()
-                )
+                DemoConnector(hostIp = hostIp)
             )
             Log.e("PSYNC", "PowerSync connect() DONE")
         }

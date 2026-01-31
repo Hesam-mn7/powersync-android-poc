@@ -1,31 +1,31 @@
 package com.example.powersync.data.sync
 
+import com.example.powersync.data.sync.spec.CustomersSpec
 import com.powersync.ExperimentalPowerSyncAPI
-import com.powersync.db.schema.Schema
-import com.powersync.db.schema.RawTable
 import com.powersync.db.schema.PendingStatement
 import com.powersync.db.schema.PendingStatementParameter
+import com.powersync.db.schema.RawTable
+import com.powersync.db.schema.Schema
 
 /**
  * PowerSync schema for Room integration
- * NO RawTable on Android
  */
 @OptIn(ExperimentalPowerSyncAPI::class)
 val powerSyncSchema = Schema(
     listOf(
         RawTable(
-            name = "customers",
+            name = CustomersSpec.table,
             put = PendingStatement(
-                "INSERT OR REPLACE INTO customers (id, customername, description, customerCode) VALUES (?, ?, ?)",
-                listOf(
-                    PendingStatementParameter.Id,
-                    PendingStatementParameter.Column("customername"),
-                    PendingStatementParameter.Column("description"),
-                    PendingStatementParameter.Column("customerCode"),
-                )
+                CustomersSpec.putSql(),
+                buildList {
+                    add(PendingStatementParameter.Id)
+                    CustomersSpec.columns.forEach { col ->
+                        add(PendingStatementParameter.Column(col))
+                    }
+                }
             ),
             delete = PendingStatement(
-                "DELETE FROM customers WHERE id = ?",
+                CustomersSpec.deleteSql(),
                 listOf(PendingStatementParameter.Id)
             )
         )
