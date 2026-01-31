@@ -2,8 +2,8 @@ package com.example.powersync.presentation.customer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.powersync.domain.repository.CustomerRepository
 import com.example.powersync.domain.model.Customer
+import com.example.powersync.domain.repository.CustomerRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -35,7 +35,11 @@ class CustomerViewModel(
             intentChannel.consumeAsFlow().collect { intent ->
                 when (intent) {
                     is CustomerIntent.LoadCustomers -> loadCustomers()
-                    is CustomerIntent.AddCustomer -> addCustomer(intent.name, intent.description)
+                    is CustomerIntent.AddCustomer -> addCustomer(
+                        intent.name,
+                        intent.description,
+                        intent.customerCode
+                    )
                     is CustomerIntent.UpdateCustomer -> updateCustomer(intent)
                     is CustomerIntent.DeleteCustomer -> deleteCustomer(intent.id)
                     is CustomerIntent.DeleteAll -> deleteAll()
@@ -64,7 +68,7 @@ class CustomerViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun addCustomer(name: String, description: String) {
+    private fun addCustomer(name: String, description: String, customerCode: String) {
         if (name.isBlank()) return
 
         viewModelScope.launch {
@@ -72,10 +76,18 @@ class CustomerViewModel(
                 Customer(
                     id = UUID.randomUUID().toString(),
                     customername = name,
-                    description = description
+                    description = description,
+                    customerCode = customerCode
                 )
             )
-            _state.update { it.copy(nameInput = "", descriptionInput = "", editingId = null) }
+            _state.update {
+                it.copy(
+                    nameInput = "",
+                    descriptionInput = "",
+                    customerCodeInput = "",
+                    editingId = null
+                )
+            }
         }
     }
 
@@ -87,10 +99,18 @@ class CustomerViewModel(
                 Customer(
                     id = intent.id,
                     customername = intent.name,
-                    description = intent.description
+                    description = intent.description,
+                    customerCode = intent.customerCode
                 )
             )
-            _state.update { it.copy(nameInput = "", descriptionInput = "", editingId = null) }
+            _state.update {
+                it.copy(
+                    nameInput = "",
+                    descriptionInput = "",
+                    customerCodeInput = "",
+                    editingId = null
+                )
+            }
         }
     }
 
@@ -98,13 +118,16 @@ class CustomerViewModel(
         viewModelScope.launch {
             val current = _state.value.customers.find { it.id == id } ?: return@launch
             repository.deleteCustomer(current)
+
             _state.update { s ->
-                if (s.editingId == id) s.copy(
-                    nameInput = "",
-                    descriptionInput = "",
-                    editingId = null
-                )
-                else s
+                if (s.editingId == id) {
+                    s.copy(
+                        nameInput = "",
+                        descriptionInput = "",
+                        customerCodeInput = "",
+                        editingId = null
+                    )
+                } else s
             }
         }
     }
@@ -112,7 +135,14 @@ class CustomerViewModel(
     private fun deleteAll() {
         viewModelScope.launch {
             repository.deleteAll()
-            _state.update { it.copy(nameInput = "", descriptionInput = "", editingId = null) }
+            _state.update {
+                it.copy(
+                    nameInput = "",
+                    descriptionInput = "",
+                    customerCodeInput = "",
+                    editingId = null
+                )
+            }
         }
     }
 
@@ -122,13 +152,21 @@ class CustomerViewModel(
             it.copy(
                 editingId = c.id,
                 nameInput = c.customername,
-                descriptionInput = c.description
+                descriptionInput = c.description,
+                customerCodeInput = c.customerCode
             )
         }
     }
 
     private fun cancelEdit() {
-        _state.update { it.copy(nameInput = "", descriptionInput = "", editingId = null) }
+        _state.update {
+            it.copy(
+                nameInput = "",
+                descriptionInput = "",
+                customerCodeInput = "",
+                editingId = null
+            )
+        }
     }
 
     fun onNameChanged(value: String) {
@@ -139,6 +177,10 @@ class CustomerViewModel(
         _state.update { it.copy(descriptionInput = value) }
     }
 
+    fun onCustomerCodeChanged(value: String) {
+        _state.update { it.copy(customerCodeInput = value) }
+    }
+
     fun submit() {
         val s = _state.value
         if (s.isEditing) {
@@ -146,11 +188,18 @@ class CustomerViewModel(
                 CustomerIntent.UpdateCustomer(
                     id = s.editingId!!,
                     name = s.nameInput,
-                    description = s.descriptionInput
+                    description = s.descriptionInput,
+                    customerCode = s.customerCodeInput
                 )
             )
         } else {
-            sendIntent(CustomerIntent.AddCustomer(s.nameInput, s.descriptionInput))
+            sendIntent(
+                CustomerIntent.AddCustomer(
+                    name = s.nameInput,
+                    description = s.descriptionInput,
+                    customerCode = s.customerCodeInput
+                )
+            )
         }
     }
 
@@ -160,7 +209,8 @@ class CustomerViewModel(
                 Customer(
                     id = UUID.randomUUID().toString(),
                     customername = "Customer $it",
-                    description = "Description $it"
+                    description = "Description $it",
+                    customerCode = "C-$it"
                 )
             }
             repository.addCustomers(list)

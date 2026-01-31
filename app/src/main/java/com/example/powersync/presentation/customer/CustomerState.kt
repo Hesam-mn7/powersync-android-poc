@@ -12,6 +12,7 @@ data class CustomerState(
     val error: String? = null,
     val nameInput: String = "",
     val descriptionInput: String = "",
+    val customerCodeInput: String = "",
     val editingId: String? = null
 ) {
     val isEditing: Boolean get() = editingId != null

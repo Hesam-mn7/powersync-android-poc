@@ -8,13 +8,15 @@ sealed class CustomerIntent {
 
     data class AddCustomer(
         val name: String,
-        val description: String
+        val description: String,
+        val customerCode: String
     ) : CustomerIntent()
 
     data class UpdateCustomer(
         val id: String,
         val name: String,
-        val description: String
+        val description: String,
+        val customerCode: String
     ) : CustomerIntent()
 
     data class DeleteCustomer(val id: String) : CustomerIntent()

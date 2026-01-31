@@ -4,11 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.powersync.domain.model.Customer
 
@@ -55,6 +57,19 @@ fun CustomerScreen(
                 value = state.descriptionInput,
                 onValueChange = viewModel::onDescriptionChanged,
                 label = { Text("Description") }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = state.customerCodeInput,
+                onValueChange = { input ->
+                    val digitsOnly = input.filter { it.isDigit() }
+                    viewModel.onCustomerCodeChanged(digitsOnly)
+                },
+                label = { Text("Customer Code") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -130,15 +145,23 @@ private fun CustomerList(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = customer.customername,
+                            text = "Customer Name: ${customer.customername}",
                             style = MaterialTheme.typography.titleMedium
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = customer.description,
+                            text = "description: ${customer.description}",
                             style = MaterialTheme.typography.bodyMedium
                         )
+                        if (customer.customerCode.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Customer Code: ${customer.customerCode}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
+
                     TextButton(onClick = { onDelete(customer.id) }) {
                         Text("Delete")
                     }

@@ -13,5 +13,7 @@ data class CustomerEntity(
     val id: String,
     @ColumnInfo(name = "customername")
     val customername: String,
-    val description: String
+    val description: String,
+    @ColumnInfo(name = "customerCode")
+    val customerCode: String
 )

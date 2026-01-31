@@ -27,7 +27,7 @@ class App : Application() {
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             PowerSyncClientHolder.installCrudTriggers()
-            val hostIp = "10.77.17.10" //API
+            val hostIp = "192.168.1.35" //API
             Log.e("PSYNC", "Connecting to PowerSync host=$hostIp")
             PowerSyncClientHolder.connect(
                 DemoConnector(

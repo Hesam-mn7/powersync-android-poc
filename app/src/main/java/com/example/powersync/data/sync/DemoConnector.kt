@@ -83,6 +83,7 @@ class DemoConnector(
                     .put("id", row.id)
                     .put("customername", row.customername)
                     .put("description", row.description)
+                    .put("customerCode", row.customerCode)
             )
             crudArray.put(obj)
         }

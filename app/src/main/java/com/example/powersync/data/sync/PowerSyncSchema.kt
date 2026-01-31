@@ -16,11 +16,12 @@ val powerSyncSchema = Schema(
         RawTable(
             name = "customers",
             put = PendingStatement(
-                "INSERT OR REPLACE INTO customers (id, customername, description) VALUES (?, ?, ?)",
+                "INSERT OR REPLACE INTO customers (id, customername, description, customerCode) VALUES (?, ?, ?)",
                 listOf(
                     PendingStatementParameter.Id,
                     PendingStatementParameter.Column("customername"),
                     PendingStatementParameter.Column("description"),
+                    PendingStatementParameter.Column("customerCode"),
                 )
             ),
             delete = PendingStatement(

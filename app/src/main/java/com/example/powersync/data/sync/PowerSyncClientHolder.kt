@@ -62,7 +62,8 @@ object PowerSyncClientHolder {
                 json_object(
                   'id', NEW.id,
                   'customername', NEW.customername,
-                  'description', NEW.description
+                  'description', NEW.description,
+                  'customerCode', NEW.customerCode
                 )
               );
             END;
@@ -89,7 +90,8 @@ object PowerSyncClientHolder {
                 json_object(
                   'id', NEW.id,
                   'customername', NEW.customername,
-                  'description', NEW.description
+                  'description', NEW.description,
+                  'customerCode', NEW.customerCode
                 )
               );
             END;
