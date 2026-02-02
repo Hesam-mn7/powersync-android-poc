@@ -1,8 +1,7 @@
 package com.example.powersync.data.repository
 
-import com.example.powersync.data.local.CustomerDao
-import com.example.powersync.data.local.CustomerEntity
-import com.example.powersync.data.sync.PowerSyncClientHolder
+import com.example.powersync.data.local.dao.CustomerDao
+import com.example.powersync.data.local.entity.CustomerEntity
 import com.example.powersync.data.sync.SyncTransferDebouncer
 import com.example.powersync.domain.model.Customer
 import com.example.powersync.domain.repository.CustomerRepository

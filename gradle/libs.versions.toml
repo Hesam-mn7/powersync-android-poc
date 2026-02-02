@@ -13,6 +13,7 @@ coroutines = "1.10.2"
 lifecycleViewModelCompose = "2.9.2"
 ksp = "2.2.10-2.0.2"
 powersync = "1.10.0"
+navigationCompose = "2.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 powersync-core = { module = "com.powersync:core", version.ref = "powersync" }
 powersync-room = { module = "com.powersync:integration-room", version.ref = "powersync" }
 powersync-core-android = { module = "com.powersync:core-android", version.ref = "powersync" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 
 
 [plugins]

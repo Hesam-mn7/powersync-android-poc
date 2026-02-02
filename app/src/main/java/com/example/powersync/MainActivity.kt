@@ -8,8 +8,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.powersync.data.local.AppDatabase
 import com.example.powersync.data.repository.CustomerRepositoryImpl
-import com.example.powersync.presentation.customer.CustomerScreen
+import com.example.powersync.data.repository.ProductRepositoryImpl
 import com.example.powersync.presentation.customer.CustomerViewModel
+import com.example.powersync.presentation.nav.AppNav
+import com.example.powersync.presentation.product.ProductViewModel
 import com.example.powersync.ui.theme.MVIRoomTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,19 +19,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val db = AppDatabase.getInstance(applicationContext)
-        val repo = CustomerRepositoryImpl(db.customerDao())
+
+        val customerRepo = CustomerRepositoryImpl(db.customerDao())
+        val productRepo = ProductRepositoryImpl(db.productDao())
 
         setContent {
             MVIRoomTheme {
-                val vm: CustomerViewModel = viewModel(
+
+                val customerVm: CustomerViewModel = viewModel(
                     factory = object : ViewModelProvider.Factory {
                         @Suppress("UNCHECKED_CAST")
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return CustomerViewModel(repo) as T
+                            return CustomerViewModel(customerRepo) as T
                         }
                     }
                 )
-                CustomerScreen(viewModel = vm)
+
+                val productVm: ProductViewModel = viewModel(
+                    factory = object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            return ProductViewModel(productRepo) as T
+                        }
+                    }
+                )
+
+                AppNav(
+                    customerVm = customerVm,
+                    productVm = productVm
+                )
             }
         }
     }

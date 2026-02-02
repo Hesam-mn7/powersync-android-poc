@@ -4,9 +4,12 @@ import android.content.Context
 import co.touchlab.kermit.Logger
 import com.example.powersync.data.local.AppDatabase
 import com.example.powersync.data.sync.spec.CustomersSpec
+import com.example.powersync.data.sync.spec.ProductsSpec
+import com.example.powersync.data.sync.spec.TableSpec
 import com.powersync.ExperimentalPowerSyncAPI
 import com.powersync.PowerSyncDatabase
 import com.powersync.connectors.PowerSyncBackendConnector
+import com.powersync.db.internal.PowerSyncTransaction
 import com.powersync.integrations.room.RoomConnectionPool
 import com.powersync.sync.SyncOptions
 import kotlinx.coroutines.CoroutineScope
@@ -42,78 +45,79 @@ object PowerSyncClientHolder {
 
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun installCrudTriggers() {
-        val spec = CustomersSpec
+        psdb.writeTransaction { tx ->
+            installTriggersForSpec(tx, CustomersSpec)
+            installTriggersForSpec(tx, ProductsSpec)
+        }
+    }
+
+    private fun installTriggersForSpec(tx: PowerSyncTransaction, spec: TableSpec<*>) {
+        val table = spec.table
+        val idCol = spec.idColumn
+        val type = spec.type
         val jsonNew = spec.triggerJsonObject("NEW.")
 
-        psdb.writeTransaction { tx ->
+        tx.execute("DROP TRIGGER IF EXISTS ${table}_insert;")
+        tx.execute("DROP TRIGGER IF EXISTS ${table}_update;")
+        tx.execute("DROP TRIGGER IF EXISTS ${table}_delete;")
 
-            tx.execute("DROP TRIGGER IF EXISTS customers_insert;")
-            tx.execute("DROP TRIGGER IF EXISTS customers_update;")
-            tx.execute("DROP TRIGGER IF EXISTS customers_delete;")
+        tx.execute(
+            """
+            CREATE TRIGGER ${table}_insert
+            AFTER INSERT ON $table
+            FOR EACH ROW
+            BEGIN
+              INSERT INTO powersync_crud (op, id, type, data)
+              VALUES (
+                'PUT',
+                NEW.$idCol,
+                '$type',
+                $jsonNew
+              );
+            END;
+            """.trimIndent()
+        )
 
-            // INSERT => PUT
-            tx.execute(
-                """
-                CREATE TRIGGER customers_insert
-                AFTER INSERT ON customers
-                FOR EACH ROW
-                BEGIN
-                  INSERT INTO powersync_crud (op, id, type, data)
-                  VALUES (
-                    'PUT',
-                    NEW.${spec.idColumn},
-                    '${spec.type}',
-                    $jsonNew
-                  );
-                END;
-                """.trimIndent()
-            )
+        tx.execute(
+            """
+            CREATE TRIGGER ${table}_update
+            AFTER UPDATE ON $table
+            FOR EACH ROW
+            BEGIN
+              SELECT CASE
+                WHEN (OLD.$idCol != NEW.$idCol)
+                THEN RAISE (FAIL, 'Cannot update id')
+              END;
 
-            // UPDATE => PATCH
-            tx.execute(
-                """
-                CREATE TRIGGER customers_update
-                AFTER UPDATE ON customers
-                FOR EACH ROW
-                BEGIN
-                  SELECT CASE
-                    WHEN (OLD.${spec.idColumn} != NEW.${spec.idColumn})
-                    THEN RAISE (FAIL, 'Cannot update id')
-                  END;
+              INSERT INTO powersync_crud (op, id, type, data)
+              VALUES (
+                'PATCH',
+                NEW.$idCol,
+                '$type',
+                $jsonNew
+              );
+            END;
+            """.trimIndent()
+        )
 
-                  INSERT INTO powersync_crud (op, id, type, data)
-                  VALUES (
-                    'PATCH',
-                    NEW.${spec.idColumn},
-                    '${spec.type}',
-                    $jsonNew
-                  );
-                END;
-                """.trimIndent()
-            )
-
-            // DELETE => DELETE
-            tx.execute(
-                """
-                CREATE TRIGGER customers_delete
-                AFTER DELETE ON customers
-                FOR EACH ROW
-                BEGIN
-                  INSERT INTO powersync_crud (op, id, type)
-                  VALUES ('DELETE', OLD.${spec.idColumn}, '${spec.type}');
-                END;
-                """.trimIndent()
-            )
-        }
+        tx.execute(
+            """
+            CREATE TRIGGER ${table}_delete
+            AFTER DELETE ON $table
+            FOR EACH ROW
+            BEGIN
+              INSERT INTO powersync_crud (op, id, type)
+              VALUES ('DELETE', OLD.$idCol, '$type');
+            END;
+            """.trimIndent()
+        )
     }
 
     @OptIn(ExperimentalPowerSyncAPI::class)
     suspend fun connect(connector: PowerSyncBackendConnector) {
         psdb.connect(
             connector,
-            options = SyncOptions(
-                newClientImplementation = true
-            )
+            options = SyncOptions(newClientImplementation = true)
         )
     }
 }

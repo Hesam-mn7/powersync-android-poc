@@ -1,4 +1,4 @@
-package com.example.powersync.data.local
+package com.example.powersync.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

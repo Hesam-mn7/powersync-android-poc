@@ -1,6 +1,6 @@
 package com.example.powersync.data.sync.spec
 
-import com.example.powersync.data.local.CustomerEntity
+import com.example.powersync.data.local.entity.CustomerEntity
 
 /**
  * Created by H.Mousavioun on 1/31/2026
